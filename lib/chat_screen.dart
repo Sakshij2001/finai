@@ -1,17 +1,69 @@
+import 'package:finai_app/models/user_plan_model.dart';
 import 'package:flutter/material.dart';
-import 'Analysis_screen.dart'; // Add this import
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'services/chat_service.dart';
 
-class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+class ChatScreenContent extends StatefulWidget {
+  const ChatScreenContent({super.key});
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  State<ChatScreenContent> createState() => _ChatScreenContentState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenContentState extends State<ChatScreenContent> {
   final TextEditingController _messageController = TextEditingController();
   final List<ChatMessage> _messages = [];
   final ScrollController _scrollController = ScrollController();
+  final ChatService _chatService = ChatService();
+  bool _isLoading = false;
+
+  // Default user plan (you'll replace this with actual user data)
+  late UserPlanData _userPlan;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeUserPlan();
+    _initializeChat();
+  }
+
+  Future<void> _initializeChat() async {
+    await _chatService.clearSession();
+
+    // Start a brand new session
+    _chatService.startNewSession();
+
+    // Save the new session ID
+    await _chatService.saveSession();
+    // await _loadConversationHistory();
+  }
+
+  void _initializeUserPlan() {
+    final currentPlan = UserCurrentPlan.basicStarterPackage();
+
+    _userPlan = UserPlanData(
+      name: currentPlan.name,
+      coverageLevel: currentPlan.coverageLevel,
+      monthlyCost: currentPlan.monthlyCost,
+      included: currentPlan.included
+          .map((b) => BenefitItem(name: b.name, summary: b.summary))
+          .toList(),
+    );
+  }
+
+  Future<void> _loadConversationHistory() async {
+    try {
+      final history = await _chatService.getHistory();
+      if (history.isNotEmpty) {
+        setState(() {
+          _messages.addAll(history);
+        });
+        _scrollToBottom();
+      }
+    } catch (e) {
+      print('No previous conversation to load');
+    }
+  }
 
   @override
   void dispose() {
@@ -20,22 +72,59 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
+  void _sendMessage() async {
+    final messageText = _messageController.text.trim();
+    if (messageText.isEmpty || _isLoading) return;
 
+    // Add user message to UI
     setState(() {
-      _messages.add(
-        ChatMessage(
-          text: _messageController.text,
-          isUser: true,
-          timestamp: DateTime.now(),
-        ),
-      );
+      _messages.add(ChatMessage(role: 'user', content: messageText));
+      _isLoading = true;
     });
 
     _messageController.clear();
+    _scrollToBottom();
 
-    // Scroll to bottom
+    // Add typing indicator
+    setState(() {
+      _messages.add(
+        ChatMessage(role: 'model', content: 'Typing...', isTyping: true),
+      );
+    });
+
+    try {
+      // Send to API
+      final response = await _chatService.sendMessage(
+        question: messageText,
+        userPlan: _userPlan,
+      );
+
+      // Remove typing indicator
+      setState(() {
+        _messages.removeLast();
+        // Add actual response
+        _messages.add(ChatMessage(role: 'model', content: response.answer));
+        _isLoading = false;
+      });
+    } catch (e) {
+      // Remove typing indicator and show error
+      setState(() {
+        _messages.removeLast();
+        _messages.add(
+          ChatMessage(
+            role: 'model',
+            content:
+                'Sorry, I encountered an error. Please try again.\n\nError: $e',
+          ),
+        );
+        _isLoading = false;
+      });
+    }
+
+    _scrollToBottom();
+  }
+
+  void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -47,7 +136,34 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  // Replace the entire build method (lines 49-174) with this:
+  Future<void> _clearChat() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear Chat'),
+        content: const Text(
+          'Are you sure you want to clear this conversation?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Clear', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await _chatService.clearSession();
+      setState(() {
+        _messages.clear();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,16 +171,49 @@ class _ChatScreenState extends State<ChatScreen> {
       backgroundColor: const Color(0xFFF5F5DC),
       appBar: AppBar(
         backgroundColor: const Color(0xFF7A9B76),
+        automaticallyImplyLeading: false,
         title: Row(
           children: [
             CircleAvatar(
               backgroundColor: Colors.white,
-              child: Icon(Icons.smart_toy, color: const Color(0xFF7A9B76)),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  width: 32,
+                  height: 32,
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
             const SizedBox(width: 12),
-            const Text(
-              'FinAI Assistant',
-              style: TextStyle(color: Colors.white),
+            const Expanded(
+              child: Text(
+                'FinAI Assistant',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            // More prominent clear button
+            TextButton.icon(
+              onPressed: _clearChat,
+              icon: const Icon(
+                Icons.delete_outline,
+                color: Colors.white,
+                size: 20,
+              ),
+              label: const Text(
+                'Clear',
+                style: TextStyle(color: Colors.white, fontSize: 14),
+              ),
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.white.withOpacity(0.2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
             ),
           ],
         ),
@@ -72,6 +221,9 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Column(
         children: [
+          // Suggested questions (show when empty)
+          if (_messages.isEmpty) _buildSuggestedQuestions(),
+
           // Messages List
           Expanded(
             child: _messages.isEmpty
@@ -86,7 +238,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                         const SizedBox(height: 20),
                         Text(
-                          'Start a conversation',
+                          'Ask me about your benefits',
                           style: TextStyle(
                             fontSize: 18,
                             color: Colors.grey[600],
@@ -120,7 +272,6 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             child: Row(
               children: [
-                // Text Field
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
@@ -132,8 +283,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     child: TextField(
                       controller: _messageController,
+                      enabled: !_isLoading,
                       decoration: const InputDecoration(
-                        hintText: 'Type a message...',
+                        hintText: 'Ask about your benefits...',
                         hintStyle: TextStyle(color: Colors.grey),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(
@@ -148,21 +300,24 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-
-                // Send Button
                 GestureDetector(
-                  onTap: _sendMessage,
+                  onTap: _isLoading ? null : _sendMessage,
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF7A9B76),
+                      color: _isLoading ? Colors.grey : const Color(0xFF7A9B76),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.send,
-                      color: Colors.white,
-                      size: 24,
-                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.send, color: Colors.white, size: 24),
                   ),
                 ),
               ],
@@ -170,64 +325,64 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-      // Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
+    );
+  }
+
+  Widget _buildSuggestedQuestions() {
+    final questions = [
+      'What does my current plan cover?',
+      'Does my plan include dental insurance?',
+      'How does short-term disability work?',
+      'Can I add vision coverage?',
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Suggested questions:',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey,
+            ),
           ),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
-          ),
-          child: BottomNavigationBar(
-            backgroundColor: const Color(0xFFB8A88A),
-            selectedItemColor: const Color(0xFF7A9B76),
-            unselectedItemColor: Colors.black54,
-            type: BottomNavigationBarType.fixed,
-            elevation: 0,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined, size: 28),
-                label: 'Home',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.analytics_outlined, size: 28),
-                label: 'Analysis',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline, size: 28),
-                label: 'Profile',
-              ),
-            ],
-            onTap: (index) {
-              // Handle navigation
-              switch (index) {
-                case 0:
-                  // Navigate to Home
-                  break;
-                case 1:
-                  // Navigate to Analysis
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AnalysisScreen(),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: questions.map((q) {
+              return GestureDetector(
+                onTap: () {
+                  _messageController.text = q;
+                  _sendMessage();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF7A9B76).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFF7A9B76).withOpacity(0.3),
                     ),
-                  );
-                  break;
-                case 2:
-                  // Navigate to Profile
-                  break;
-              }
-            },
+                  ),
+                  child: Text(
+                    q,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF7A9B76),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -268,13 +423,42 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 ],
               ),
-              child: Text(
-                message.text,
-                style: TextStyle(
-                  color: message.isUser ? Colors.white : Colors.black87,
-                  fontSize: 16,
-                ),
-              ),
+              child: message.isTyping
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.grey[400],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text('Thinking...'),
+                      ],
+                    )
+                  : message.isUser
+                  ? Text(
+                      message.content,
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                    )
+                  : MarkdownBody(
+                      data: message.content,
+                      styleSheet: MarkdownStyleSheet(
+                        p: const TextStyle(color: Colors.black87, fontSize: 16),
+                        strong: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                        em: const TextStyle(
+                          fontStyle: FontStyle.italic,
+                          color: Colors.black87,
+                        ),
+                        listBullet: const TextStyle(color: Colors.black87),
+                      ),
+                    ),
             ),
           ),
           if (message.isUser) ...[
@@ -289,16 +473,4 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
-}
-
-class ChatMessage {
-  final String text;
-  final bool isUser;
-  final DateTime timestamp;
-
-  ChatMessage({
-    required this.text,
-    required this.isUser,
-    required this.timestamp,
-  });
 }
