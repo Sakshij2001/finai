@@ -170,60 +170,6 @@ class _CurrentPlanScreenState extends State<CurrentPlanScreen> {
           ],
         ),
       ),
-      // Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
-          ),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
-          ),
-          child: BottomNavigationBar(
-            currentIndex: 1,
-            backgroundColor: const Color(0xFFB8A88A),
-            selectedItemColor: const Color(0xFF7A9B76),
-            unselectedItemColor: Colors.black54,
-            type: BottomNavigationBarType.fixed,
-            elevation: 0,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined, size: 28),
-                label: 'Home',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.analytics_outlined, size: 28),
-                label: 'Analysis',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline, size: 28),
-                label: 'Profile',
-              ),
-            ],
-            onTap: (index) {
-              switch (index) {
-                case 0:
-                  // Navigate to Home
-                  Navigator.popUntil(context, (route) => route.isFirst);
-                  break;
-                case 1:
-                  // Already on Analysis flow
-                  break;
-                case 2:
-                  // Navigate to Profile
-                  break;
-              }
-            },
-          ),
-        ),
-      ),
     );
   }
 

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'Analysis_screen.dart'; // Add this import
 
-class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+// Content-only version for use in HomeScreen with bottom navigation
+class ChatScreenContent extends StatefulWidget {
+  const ChatScreenContent({super.key});
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  State<ChatScreenContent> createState() => _ChatScreenContentState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenContentState extends State<ChatScreenContent> {
   final TextEditingController _messageController = TextEditingController();
   final List<ChatMessage> _messages = [];
   final ScrollController _scrollController = ScrollController();
@@ -35,7 +35,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     _messageController.clear();
 
-    // Scroll to bottom
+    // Scroll to bottom after sending message
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -47,14 +47,13 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  // Replace the entire build method (lines 49-174) with this:
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5DC),
       appBar: AppBar(
         backgroundColor: const Color(0xFF7A9B76),
+        automaticallyImplyLeading: false, // Remove back button
         title: Row(
           children: [
             CircleAvatar(
@@ -170,65 +169,6 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-      // Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
-          ),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
-          ),
-          child: BottomNavigationBar(
-            backgroundColor: const Color(0xFFB8A88A),
-            selectedItemColor: const Color(0xFF7A9B76),
-            unselectedItemColor: Colors.black54,
-            type: BottomNavigationBarType.fixed,
-            elevation: 0,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined, size: 28),
-                label: 'Home',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.analytics_outlined, size: 28),
-                label: 'Analysis',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline, size: 28),
-                label: 'Profile',
-              ),
-            ],
-            onTap: (index) {
-              // Handle navigation
-              switch (index) {
-                case 0:
-                  // Navigate to Home
-                  break;
-                case 1:
-                  // Navigate to Analysis
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AnalysisScreen(),
-                    ),
-                  );
-                  break;
-                case 2:
-                  // Navigate to Profile
-                  break;
-              }
-            },
-          ),
-        ),
-      ),
     );
   }
 
@@ -291,6 +231,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
+// Chat Message Model
 class ChatMessage {
   final String text;
   final bool isUser;

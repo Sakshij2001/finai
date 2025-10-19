@@ -1,3 +1,4 @@
+import 'package:finai_app/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
@@ -8,8 +9,6 @@ import 'Analysis_screen.dart';
 import 'terms_conditions.dart';
 import 'lifestyle.dart';
 import 'ig_connection.dart';
-import 'what_if.dart';
-import 'current_plan.dart';
 
 void main() {
   runApp(const MyApp());
@@ -31,6 +30,19 @@ class _MyAppState extends State<MyApp> {
     _configureAmplify();
   }
 
+  Future<void> _checkAndSignOut() async {
+    try {
+      final session = await Amplify.Auth.fetchAuthSession();
+      if (session.isSignedIn) {
+        // User is already signed in, either auto-navigate or sign them out
+        await Amplify.Auth.signOut();
+        safePrint('Existing session cleared on login screen');
+      }
+    } catch (e) {
+      safePrint('Session check error: $e');
+    }
+  }
+
   Future<void> _configureAmplify() async {
     try {
       final auth = AmplifyAuthCognito();
@@ -39,6 +51,7 @@ class _MyAppState extends State<MyApp> {
       setState(() {
         _amplifyConfigured = true;
       });
+      await _checkAndSignOut();
       safePrint('Successfully configured Amplify');
     } on Exception catch (e) {
       safePrint('Error configuring Amplify: $e');
@@ -59,77 +72,13 @@ class _MyAppState extends State<MyApp> {
           : const Scaffold(body: Center(child: CircularProgressIndicator())),
       routes: {
         '/login': (context) => const LoginScreen(),
-        '/home': (context) => const MyHomePage(title: 'Home'),
-        '/chat': (context) => const ChatScreen(),
+        '/home': (context) => HomeScreen(),
+        '/chat': (context) => const ChatScreenContent(),
         '/analysis': (context) => const AnalysisScreen(),
         '/terms': (context) => const TermsConditionsScreen(),
         '/lifestyle': (context) => const LifestyleScreen(),
         '/ig_connection': (context) => const IgConnectionScreen(),
       },
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  Future<void> _signOut() async {
-    try {
-      await Amplify.Auth.signOut();
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/login');
-      }
-    } on AuthException catch (e) {
-      safePrint('Error signing out: ${e.message}');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _signOut,
-            tooltip: 'Sign Out',
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
     );
   }
 }
