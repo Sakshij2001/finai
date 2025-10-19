@@ -7,7 +7,6 @@ import 'login_screen.dart';
 import 'chat_screen.dart';
 import 'analysis_screen.dart';
 import 'terms_conditions.dart';
-import 'lifestyle.dart';
 import 'ig_connection.dart';
 
 void main() {
@@ -68,7 +67,7 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: true,
       ),
       home: _amplifyConfigured
-          ? const HomeScreen()
+          ? const LoginScreen()
           : const Scaffold(body: Center(child: CircularProgressIndicator())),
       routes: {
         '/login': (context) => const LoginScreen(),

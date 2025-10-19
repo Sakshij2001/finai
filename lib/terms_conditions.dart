@@ -80,6 +80,7 @@ class TermsConditionsScreen extends StatelessWidget {
                         // I Agree Button
                         ElevatedButton(
                           onPressed: () {
+                            Navigator.of(context).pop();
                             // Navigate to Instagram connection screen
                             Navigator.push(
                               context,

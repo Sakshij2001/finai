@@ -111,7 +111,7 @@ const String benefitQuestionsJson = '''
       "type": "yes_no",
       "next_question": {
         "yes": 12,
-        "no": 14
+        "no": 13
       }
     },
     {
@@ -121,64 +121,30 @@ const String benefitQuestionsJson = '''
       "type": "dropdown",
       "options": ["Spouse", "Children", "Parents", "All Family Members"],
       "next_question": {
+        "default": 13
+      }
+    },
+    {
+      "id": 13,
+      "section": "Accident Protection",
+      "question": "Would you like to include accidental coverage in your benefit plan?",
+      "type": "yes_no",
+      "next_question": {
         "default": 14
       }
     },
     {
       "id": 14,
-      "section": "Accident Protection",
-      "question": "Would you like to include accidental coverage in your benefit plan?",
-      "type": "yes_no",
+      "section": "Budget & Coverage",
+      "question": "What is your preferred monthly budget range for the benefit plan?",
+      "type": "dropdown",
+      "options": ["Below \$50", "\$50 - \$100", "\$100 - \$200", "Above \$200"],
       "next_question": {
         "default": 15
       }
     },
     {
       "id": 15,
-      "section": "Budget & Coverage",
-      "question": "What is your preferred monthly budget range for the benefit plan?",
-      "type": "dropdown",
-      "options": ["Below \$50", "\$50 - \$100", "\$100 - \$200", "Above \$200"],
-      "next_question": {
-        "default": 16
-      }
-    },
-    {
-      "id": 16,
-      "section": "Risk Tolerance",
-      "question": "How comfortable are you with taking financial risks for higher coverage or returns?",
-      "type": "dropdown",
-      "options": [
-        "Low (Prefer Stable Coverage)",
-        "Medium (Balanced Coverage & Returns)",
-        "High (Aggressive Growth & Benefits)"
-      ],
-      "next_question": {
-        "default": 17
-      }
-    },
-    {
-      "id": 17,
-      "section": "Hobbies",
-      "question": "Do you participate in any high-risk hobbies or sports (e.g., skydiving, racing, trekking)?",
-      "type": "yes_no",
-      "next_question": {
-        "yes": 18,
-        "no": 19
-      }
-    },
-    {
-      "id": 18,
-      "section": "Hobbies",
-      "question": "Please select your activity type:",
-      "type": "dropdown",
-      "options": ["Racing", "Skydiving", "Mountain Climbing", "Scuba Diving", "Other"],
-      "next_question": {
-        "default": 19
-      }
-    },
-    {
-      "id": 19,
       "section": "Completion",
       "question": "Would you like to view your personalized benefit plan now?",
       "type": "yes_no",

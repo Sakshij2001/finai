@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:finai_app/form_results_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:finai_app/data/benefit_questions.dart';
 
@@ -115,20 +116,11 @@ class _BenefitFormScreenState extends State<BenefitFormScreen>
   }
 
   void _showResults() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Form Complete!'),
-        content: const Text('Your benefit plan is being generated...'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            child: const Text('Done'),
-          ),
-        ],
+    // Navigate to form results screen with answers
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FormResultsScreen(formAnswers: answers),
       ),
     );
   }
@@ -173,7 +165,7 @@ class _BenefitFormScreenState extends State<BenefitFormScreen>
                     Text(
                       'Questions $questionNumber of $totalQuestions',
                       style: TextStyle(
-                        color: Colors.purple[700],
+                        color: Color(0xFF7A9B76),
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
@@ -187,7 +179,7 @@ class _BenefitFormScreenState extends State<BenefitFormScreen>
                     value: questionNumber / totalQuestions,
                     backgroundColor: Colors.grey[200],
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.purple[600]!,
+                      Color(0xFF7A9B76),
                     ),
                     minHeight: 6,
                   ),
@@ -269,10 +261,10 @@ class _BenefitFormScreenState extends State<BenefitFormScreen>
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.purple[50] : Colors.grey[100],
+          color: isSelected ? Colors.lightGreen[50] : Colors.grey[100],
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? Colors.purple[600]! : Colors.transparent,
+            color: isSelected ? Colors.lightGreen[600]! : Colors.transparent,
             width: 2,
           ),
         ),
@@ -285,7 +277,7 @@ class _BenefitFormScreenState extends State<BenefitFormScreen>
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? Colors.purple[700] : Colors.black87,
+                  color: isSelected ? Colors.lightGreen[700] : Colors.black87,
                 ),
               ),
             ),
@@ -294,7 +286,7 @@ class _BenefitFormScreenState extends State<BenefitFormScreen>
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: Colors.purple[600],
+                  color: Colors.lightGreen[600],
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.check, color: Colors.white, size: 18),

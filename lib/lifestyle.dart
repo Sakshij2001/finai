@@ -1,6 +1,8 @@
+import 'package:finai_app/models/user_plan_model.dart';
 import 'package:flutter/material.dart';
 import 'current_plan.dart';
 import 'models/api_response_model.dart';
+import 'models/user_plan_model.dart';
 
 class LifestyleScreen extends StatefulWidget {
   final InstagramAnalysisResponse analysisData;
@@ -44,9 +46,18 @@ class _LifestyleScreenState extends State<LifestyleScreen>
   }
 
   void _generatePlan() {
+    // Generate recommendations based on selected activities
+    final recommendations = RecommendedBenefit.fromTraits(_selectedActivities);
+
+    // Navigate to Current Plan with recommendations
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const CurrentPlanScreen()),
+      MaterialPageRoute(
+        builder: (context) => CurrentPlanScreen(
+          currentPlan: UserCurrentPlan.basicStarterPackage(),
+          recommendations: recommendations,
+        ),
+      ),
     );
   }
 

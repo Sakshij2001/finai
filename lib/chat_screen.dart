@@ -1,3 +1,4 @@
+import 'package:finai_app/models/user_plan_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'services/chat_service.dart';
@@ -27,29 +28,26 @@ class _ChatScreenContentState extends State<ChatScreenContent> {
   }
 
   Future<void> _initializeChat() async {
-    await _chatService.loadSession();
-    await _loadConversationHistory();
+    await _chatService.clearSession();
+
+    // Start a brand new session
+    _chatService.startNewSession();
+
+    // Save the new session ID
+    await _chatService.saveSession();
+    // await _loadConversationHistory();
   }
 
   void _initializeUserPlan() {
+    final currentPlan = UserCurrentPlan.basicStarterPackage();
+
     _userPlan = UserPlanData(
-      name: 'Basic Starter Package',
-      coverageLevel: 'Basic',
-      monthlyCost: '\$0 (employer-paid)',
-      included: [
-        BenefitItem(
-          name: 'Short-Term Disability',
-          summary: 'Weekly cash benefits if you can\'t work',
-        ),
-        BenefitItem(
-          name: 'Long-Term Disability',
-          summary: 'Monthly cash benefits for extended absences',
-        ),
-        BenefitItem(
-          name: 'Life & AD&D Insurance',
-          summary: 'Financial protection for loved ones',
-        ),
-      ],
+      name: currentPlan.name,
+      coverageLevel: currentPlan.coverageLevel,
+      monthlyCost: currentPlan.monthlyCost,
+      included: currentPlan.included
+          .map((b) => BenefitItem(name: b.name, summary: b.summary))
+          .toList(),
     );
   }
 
@@ -178,7 +176,14 @@ class _ChatScreenContentState extends State<ChatScreenContent> {
           children: [
             CircleAvatar(
               backgroundColor: Colors.white,
-              child: Icon(Icons.smart_toy, color: const Color(0xFF7A9B76)),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  width: 32,
+                  height: 32,
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
             const SizedBox(width: 12),
             const Expanded(
