@@ -1,16 +1,34 @@
-# finai_app
+# FinAI
 
-A new Flutter project.
+A Flutter-based mobile application that helps users discover personalized employee benefit plans through intelligent lifestyle analysis.
 
-## Getting Started
+## Overview
 
-This project is a starting point for a Flutter application.
+FinAI simplifies the process of selecting employee benefits by analyzing user lifestyle and providing tailored recommendations. The app uses two primary methods to understand user needs:
 
-A few resources to get you started if this is your first Flutter project:
+1. **Form-based questionnaire** - Users answer questions about their health, lifestyle, family, and budget preferences
+2. **Instagram analysis** - AI-powered analysis of user Instagram posts to detect lifestyle patterns and activities
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Features
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- User authentication via AWS Amplify Cognito
+- Interactive benefit questionnaire with dynamic question flow
+- Instagram lifestyle analysis using machine learning
+- AI chat assistant for benefit-related questions
+- Personalized benefit plan recommendations
+- Current plan overview with coverage details
+- Session-based conversation management
+
+## Architecture
+
+The app integrates with backend services hosted on AWS and Google Cloud Platform for:
+- Instagram post analysis
+- LLM-powered chat assistance
+- User benefit plan generation
+
+## Technology Stack
+
+- Flutter/Dart
+- AWS Amplify (Authentication)
+- Google Cloud Run (Chat API)
+- AWS Lambda (Instagram Analysis API)
