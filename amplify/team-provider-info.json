@@ -1,0 +1,20 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-finai-dev-d2bc2-authRole",
+      "UnauthRoleArn": "arn:aws:iam::932591835288:role/amplify-finai-dev-d2bc2-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::932591835288:role/amplify-finai-dev-d2bc2-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-finai-dev-d2bc2-deployment",
+      "UnauthRoleName": "amplify-finai-dev-d2bc2-unauthRole",
+      "StackName": "amplify-finai-dev-d2bc2",
+      "StackId": "arn:aws:cloudformation:us-east-1:932591835288:stack/amplify-finai-dev-d2bc2/f4e4be50-ac78-11f0-bd00-0e462a1a385b",
+      "AmplifyAppId": "d3ql3ex4vr70s6"
+    },
+    "categories": {
+      "auth": {
+        "finaif1ca8c01": {}
+      }
+    }
+  }
+}
