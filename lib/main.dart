@@ -5,7 +5,7 @@ import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'amplifyconfiguration.dart';
 import 'login_screen.dart';
 import 'chat_screen.dart';
-import 'Analysis_screen.dart';
+import 'analysis_screen.dart';
 import 'terms_conditions.dart';
 import 'lifestyle.dart';
 import 'ig_connection.dart';
@@ -68,7 +68,7 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: true,
       ),
       home: _amplifyConfigured
-          ? const LoginScreen()
+          ? const HomeScreen()
           : const Scaffold(body: Center(child: CircularProgressIndicator())),
       routes: {
         '/login': (context) => const LoginScreen(),
@@ -76,7 +76,6 @@ class _MyAppState extends State<MyApp> {
         '/chat': (context) => const ChatScreenContent(),
         '/analysis': (context) => const AnalysisScreen(),
         '/terms': (context) => const TermsConditionsScreen(),
-        '/lifestyle': (context) => const LifestyleScreen(),
         '/ig_connection': (context) => const IgConnectionScreen(),
       },
     );

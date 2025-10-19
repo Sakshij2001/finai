@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'lifestyle.dart'; // Add this import
+import 'lifestyle.dart';
+import 'services/api_service.dart';
 
 class IgConnectionScreen extends StatefulWidget {
   const IgConnectionScreen({super.key});
@@ -11,6 +12,7 @@ class IgConnectionScreen extends StatefulWidget {
 class _IgConnectionScreenState extends State<IgConnectionScreen> {
   final TextEditingController _usernameController = TextEditingController();
   bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -18,213 +20,178 @@ class _IgConnectionScreenState extends State<IgConnectionScreen> {
     super.dispose();
   }
 
-  void _submitUsername() {
-    if (_usernameController.text.trim().isEmpty) return;
+  void _submitUsername() async {
+    final username = _usernameController.text.trim();
+
+    if (username.isEmpty) {
+      setState(() {
+        _errorMessage = 'Please enter a username';
+      });
+      return;
+    }
 
     setState(() {
       _isLoading = true;
+      _errorMessage = null;
     });
 
-    // Simulate processing delay
-    Future.delayed(const Duration(seconds: 1), () {
+    try {
+      final response = await ApiService.analyzeInstagram(username);
+
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
 
-        // Navigate to lifestyle screen
+        // Navigate to lifestyle screen with the API response
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const LifestyleScreen()),
+          MaterialPageRoute(
+            builder: (context) => LifestyleScreen(analysisData: response),
+          ),
         );
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Failed to analyze account. Please try again.';
+        });
+
+        // Show error dialog
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Error'),
+            content: Text(e.toString()),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+        ),
+        title: Text(
+          'Instagram Connection',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: const Color(0xFF7A9B76),
+        automaticallyImplyLeading: false,
+      ),
       backgroundColor: const Color(0xFFF5F5DC),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Top header section with back button
-            Stack(
+        child: Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  height: 140,
-                  width: double.infinity,
-                  decoration: const BoxDecoration(color: Color(0xFFD4D4A8)),
+                // Instruction text
+                const Text(
+                  'Please enter your Instagram Account Username below:',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 20, height: 1.4),
                 ),
-                Positioned(
-                  top: 8,
-                  left: 8,
-                  child: IconButton(
-                    onPressed: () {
-                      Navigator.pop(context); // Go back to terms & conditions
-                    },
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: Colors.black87,
-                      size: 28,
-                    ),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.9),
-                      padding: const EdgeInsets.all(8),
+                const SizedBox(height: 60),
+
+                // Username input field
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC9B5A8),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Text(
+                        '@',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: TextField(
+                          controller: _usernameController,
+                          enabled: !_isLoading,
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            hintText: 'alexaAdams07',
+                            hintStyle: TextStyle(
+                              fontSize: 20,
+                              color: Colors.black54,
+                            ),
+                          ),
+                          style: const TextStyle(fontSize: 20),
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _submitUsername(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                if (_errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: Colors.red, fontSize: 14),
                     ),
                   ),
+
+                const SizedBox(height: 60),
+
+                // Enter button
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _submitUsername,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF7A9B76),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 80,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Enter',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
                 ),
               ],
             ),
-
-            // Main content
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Instruction text
-                    const Text(
-                      'Please enter your Instagram Account Username below:',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 20, height: 1.4),
-                    ),
-                    const SizedBox(height: 60),
-
-                    // Username input field
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFC9B5A8),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          // @ symbol
-                          const Text(
-                            '@',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          // Text field
-                          Expanded(
-                            child: TextField(
-                              controller: _usernameController,
-                              decoration: const InputDecoration(
-                                border: InputBorder.none,
-                                hintText: 'alexaAdams07',
-                                hintStyle: TextStyle(
-                                  fontSize: 20,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                              style: const TextStyle(fontSize: 20),
-                              textInputAction: TextInputAction.done,
-                              onSubmitted: (_) => _submitUsername(),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 60),
-
-                    // Enter button
-                    ElevatedButton(
-                      onPressed: _isLoading ? null : _submitUsername,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF7A9B76),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 80,
-                          vertical: 16,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              'Enter',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      // Bottom Navigation Bar - matching chat_screen.dart exactly
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
-          ),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
-          ),
-          child: BottomNavigationBar(
-            currentIndex: 1,
-            backgroundColor: const Color(0xFFB8A88A),
-            selectedItemColor: const Color(0xFF7A9B76),
-            unselectedItemColor: Colors.black54,
-            type: BottomNavigationBarType.fixed,
-            elevation: 0,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined, size: 28),
-                label: 'Home',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.analytics_outlined, size: 28),
-                label: 'Analysis',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline, size: 28),
-                label: 'Profile',
-              ),
-            ],
-            onTap: (index) {
-              // Handle navigation
-              switch (index) {
-                case 0:
-                  // Navigate to Home (back to chat)
-                  Navigator.pop(context);
-                  break;
-                case 1:
-                  // Already on Analysis
-                  break;
-                case 2:
-                  // Navigate to Profile
-                  break;
-              }
-            },
           ),
         ),
       ),

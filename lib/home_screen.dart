@@ -1,7 +1,8 @@
+import 'package:finai_app/services/chat_service.dart';
 import 'package:flutter/material.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'chat_screen.dart';
-import 'Analysis_screen.dart';
+import 'analysis_screen.dart';
 import 'current_plan.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -23,6 +24,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _signOut() async {
     try {
+      // Clear chat session before signing out
+      final chatService = ChatService();
+      await chatService.clearSession();
+
       await Amplify.Auth.signOut();
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/login');
@@ -48,16 +53,22 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         child: ClipRRect(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
-          ),
           child: BottomNavigationBar(
             currentIndex: _currentIndex,
-            backgroundColor: const Color(0xFFB8A88A),
-            selectedItemColor: const Color(0xFF7A9B76),
-            unselectedItemColor: Colors.black54,
+            backgroundColor: const Color(0xFF7A9B76),
+            selectedItemColor: Colors.white,
+            unselectedItemColor: Colors.white,
             type: BottomNavigationBarType.fixed,
+            selectedLabelStyle: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+            unselectedLabelStyle: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
             elevation: 0,
             onTap: (index) {
               setState(() {
@@ -66,18 +77,26 @@ class _HomeScreenState extends State<HomeScreen> {
             },
             items: const [
               BottomNavigationBarItem(
-                icon: Icon(Icons.chat_outlined, size: 28),
-                activeIcon: Icon(Icons.chat, size: 28),
+                icon: Icon(Icons.chat_outlined, size: 28, color: Colors.white),
+                activeIcon: Icon(Icons.chat, size: 28, color: Colors.white),
                 label: 'Chat',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.analytics_outlined, size: 28),
-                activeIcon: Icon(Icons.analytics, size: 28),
+                icon: Icon(
+                  Icons.analytics_outlined,
+                  size: 28,
+                  color: Colors.white,
+                ),
+                activeIcon: Icon(Icons.chat, size: 28, color: Colors.white),
                 label: 'Analysis',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.description_outlined, size: 28),
-                activeIcon: Icon(Icons.description, size: 28),
+                icon: Icon(
+                  Icons.description_outlined,
+                  size: 28,
+                  color: Colors.white,
+                ),
+                activeIcon: Icon(Icons.chat, size: 28, color: Colors.white),
                 label: 'Current Plan',
               ),
             ],

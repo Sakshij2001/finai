@@ -1,258 +1,349 @@
 import 'package:flutter/material.dart';
 import 'current_plan.dart';
+import 'models/api_response_model.dart';
 
 class LifestyleScreen extends StatefulWidget {
-  const LifestyleScreen({super.key});
+  final InstagramAnalysisResponse analysisData;
+
+  const LifestyleScreen({super.key, required this.analysisData});
 
   @override
   State<LifestyleScreen> createState() => _LifestyleScreenState();
 }
 
-class _LifestyleScreenState extends State<LifestyleScreen> {
-  // Track selected lifestyle traits
-  final Set<String> _selectedTraits = {
-    'Car Accident',
-    'Digital Lifestyle',
-    'Ice Skating',
-    'Work Life Balance',
-    'Hand Impairment',
-    'Glasses/Vision',
-  };
+class _LifestyleScreenState extends State<LifestyleScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  Set<String> _selectedActivities = {};
 
-  void _toggleTrait(String trait) async {
-    // If trait is selected, show confirmation before removing
-    if (_selectedTraits.contains(trait)) {
-      final shouldRemove = await showDialog<bool>(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Remove Trait'),
-            content: Text('Are you sure you want to remove "$trait"?'),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text(
-                  'Cancel',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Remove'),
-              ),
-            ],
-          );
-        },
-      );
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+    // Pre-select health indicators and risk indicators
+    _selectedActivities = {
+      ...widget.analysisData.lifestyleAnalysis.healthIndicators,
+      ...widget.analysisData.lifestyleAnalysis.riskIndicators,
+    };
+  }
 
-      // If user confirmed, remove the trait
-      if (shouldRemove == true) {
-        setState(() {
-          _selectedTraits.remove(trait);
-        });
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _toggleActivity(String activity) {
+    setState(() {
+      if (_selectedActivities.contains(activity)) {
+        _selectedActivities.remove(activity);
+      } else {
+        _selectedActivities.add(activity);
       }
-    } else {
-      // If not selected, just add it
-      setState(() {
-        _selectedTraits.add(trait);
-      });
-    }
+    });
   }
 
   void _generatePlan() {
-    // Navigate to current plan screen
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const CurrentPlanScreen()),
     );
   }
 
+  String _formatTag(String tag) {
+    return tag
+        .split('_')
+        .map((word) => word[0].toUpperCase() + word.substring(1))
+        .join(' ');
+  }
+
   @override
   Widget build(BuildContext context) {
+    final analysis = widget.analysisData.lifestyleAnalysis;
+
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+        ),
+        title: Text('Lifestyle', style: TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFF7A9B76),
+        automaticallyImplyLeading: false,
+      ),
       backgroundColor: const Color(0xFFF5F5DC),
       body: SafeArea(
         child: Column(
           children: [
-            // Top header section with back button
-            Stack(
-              children: [
-                Container(
-                  height: 70,
-                  width: double.infinity,
-                  decoration: const BoxDecoration(color: Color(0xFFD4D4A8)),
-                ),
-                Positioned(
-                  top: 8,
-                  left: 8,
-                  child: IconButton(
-                    onPressed: () {
-                      Navigator.pop(context); // Go back
-                    },
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: Colors.black87,
-                      size: 28,
-                    ),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.9),
-                      padding: const EdgeInsets.all(8),
+            // Header with just back button
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              margin: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF7A9B76),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  const Icon(Icons.camera_alt, color: Colors.white, size: 32),
+                  const SizedBox(height: 12),
+                  Text(
+                    widget.analysisData.recommendations.summary,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      height: 1.4,
+                      color: Colors.white,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      _buildInfoChip(
+                        '${analysis.detectedActivities.length} Activities',
+                        Icons.directions_run,
+                      ),
+                      _buildInfoChip(
+                        '${analysis.healthIndicators.length} Health',
+                        Icons.favorite,
+                      ),
+                      _buildInfoChip(
+                        '${analysis.riskIndicators.length} Risks',
+                        Icons.warning_amber,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
 
-            // Main content
+            // Tabs
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                labelColor: const Color(0xFF7A9B76),
+                unselectedLabelColor: Colors.grey,
+                indicatorSize: TabBarIndicatorSize.tab,
+                indicator: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: const Color(0xFF7A9B76).withOpacity(0.1),
+                ),
+                tabs: const [
+                  Tab(icon: Icon(Icons.list), text: 'All'),
+                  Tab(icon: Icon(Icons.favorite), text: 'Health'),
+                  Tab(icon: Icon(Icons.warning), text: 'Risks'),
+                  Tab(icon: Icon(Icons.person), text: 'Others'),
+                ],
+              ),
+            ),
+
+            // Tab content
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  children: [
-                    // Analysis result text
-                    const Text(
-                      'Based on the analysis of your Instagram account, we have found that you might be interested in the following habits/traits:',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 18, height: 1.5),
-                    ),
-                    const SizedBox(height: 40),
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildActivityList(analysis.detectedActivities),
+                  _buildActivityList(analysis.healthIndicators),
+                  _buildActivityList(analysis.riskIndicators),
+                  _buildActivityList(analysis.demographics),
+                ],
+              ),
+            ),
 
-                    // Lifestyle traits chips
-                    Wrap(
-                      spacing: 16,
-                      runSpacing: 16,
-                      alignment: WrapAlignment.center,
-                      children: [
-                        _buildTraitChip('Car Accident'),
-                        _buildTraitChip('Digital Lifestyle'),
-                        _buildTraitChip('Ice Skating'),
-                        _buildTraitChip('Work Life Balance'),
-                        _buildTraitChip('Hand Impairment'),
-                        _buildTraitChip('Glasses/Vision'),
-                      ],
+            // Bottom action button
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    '${_selectedActivities.length} traits selected',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
                     ),
-                    const SizedBox(height: 60),
-
-                    // Generate Plan button
-                    ElevatedButton(
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
                       onPressed: _generatePlan,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF7A9B76),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 40,
-                          vertical: 16,
-                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 18),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                          borderRadius: BorderRadius.circular(16),
                         ),
+                        elevation: 2,
                       ),
                       child: const Text(
-                        'Generates New Plan',
+                        'Generate Personalized Plan',
                         style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w400,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],
-        ),
-      ),
-      // Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
-          ),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
-          ),
-          child: BottomNavigationBar(
-            currentIndex: 1,
-            backgroundColor: const Color(0xFFB8A88A),
-            selectedItemColor: const Color(0xFF7A9B76),
-            unselectedItemColor: Colors.black54,
-            type: BottomNavigationBarType.fixed,
-            elevation: 0,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined, size: 28),
-                label: 'Home',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.analytics_outlined, size: 28),
-                label: 'Analysis',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline, size: 28),
-                label: 'Profile',
-              ),
-            ],
-            onTap: (index) {
-              switch (index) {
-                case 0:
-                  // Navigate to Home
-                  Navigator.popUntil(context, (route) => route.isFirst);
-                  break;
-                case 1:
-                  // Already on Analysis flow
-                  break;
-                case 2:
-                  // Navigate to Profile
-                  break;
-              }
-            },
-          ),
         ),
       ),
     );
   }
 
-  Widget _buildTraitChip(String trait) {
-    final isSelected = _selectedTraits.contains(trait);
-
-    return GestureDetector(
-      onTap: () => _toggleTrait(trait),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFC9B5A8),
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isSelected ? Icons.close : Icons.check,
-              size: 20,
-              color: Colors.black87,
+  Widget _buildInfoChip(String label, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: const Color(0xFF7A9B76)),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF7A9B76),
             ),
-            const SizedBox(width: 12),
-            Text(
-              trait,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
+  }
+
+  Widget _buildActivityList(List<String> activities) {
+    if (activities.isEmpty) {
+      return const Center(
+        child: Text(
+          'No activities detected in this category',
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: activities.length,
+      itemBuilder: (context, index) {
+        final activity = activities[index];
+        final isSelected = _selectedActivities.contains(activity);
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? const Color(0xFF7A9B76).withOpacity(0.1)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? const Color(0xFF7A9B76) : Colors.grey[300]!,
+              width: isSelected ? 2 : 1,
+            ),
+            boxShadow: [
+              if (isSelected)
+                BoxShadow(
+                  color: const Color(0xFF7A9B76).withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+            ],
+          ),
+          child: ListTile(
+            onTap: () => _toggleActivity(activity),
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isSelected ? const Color(0xFF7A9B76) : Colors.grey[200],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                _getIconForActivity(activity),
+                color: isSelected ? Colors.white : Colors.grey[600],
+                size: 24,
+              ),
+            ),
+            title: Text(
+              _formatTag(activity),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected ? const Color(0xFF7A9B76) : Colors.black87,
+              ),
+            ),
+            trailing: isSelected
+                ? const Icon(
+                    Icons.check_circle,
+                    color: Color(0xFF7A9B76),
+                    size: 28,
+                  )
+                : Icon(
+                    Icons.circle_outlined,
+                    color: Colors.grey[400],
+                    size: 28,
+                  ),
+          ),
+        );
+      },
+    );
+  }
+
+  IconData _getIconForActivity(String activity) {
+    if (activity.contains('exercise') || activity.contains('active')) {
+      return Icons.fitness_center;
+    } else if (activity.contains('health') || activity.contains('medical')) {
+      return Icons.favorite;
+    } else if (activity.contains('risk') || activity.contains('stress')) {
+      return Icons.warning_amber;
+    } else if (activity.contains('work') ||
+        activity.contains('desk') ||
+        activity.contains('office')) {
+      return Icons.work;
+    } else if (activity.contains('screen') || activity.contains('digital')) {
+      return Icons.phone_android;
+    } else if (activity.contains('glasses') || activity.contains('vision')) {
+      return Icons.visibility;
+    } else if (activity.contains('car') || activity.contains('commut')) {
+      return Icons.directions_car;
+    } else if (activity.contains('age')) {
+      return Icons.cake;
+    } else {
+      return Icons.label;
+    }
   }
 }
